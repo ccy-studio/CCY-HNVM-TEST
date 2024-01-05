@@ -1,0 +1,13 @@
+{
+    "files.encoding": "gb2312",
+    "files.associations": {
+        "intrins.h": "c",
+        "gui.h": "c",
+        "stdint.h": "c",
+        "stdbool.h": "c",
+        "stdio.h": "c",
+        "string.h": "c",
+        "STRING.H": "cpp",
+        "stc8h.h": "c"
+    }
+}

@@ -1,0 +1,57 @@
+C51 COMPILER V9.60.7.0   SYS                                                               01/05/2024 21:19:50 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SYS
+OBJECT MODULE PLACED IN .\Objects\sys.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\sys.c LARGE OPTIMIZE(8,SPEED) BROWSE INCDIR(./src/inc) DEBUG OBJECTE
+                    -XTEND PRINT(.\Listings\sys.lst) OBJECT(.\Objects\sys.obj)
+
+line level    source
+
+   1          #include "sys.h"
+   2          
+   3          void delay_ms(u32 ms) {
+   4   1          unsigned char data i, j;
+   5   1          do {
+   6   2              i = 29;
+   7   2              j = 183;
+   8   2              do {
+   9   3                  while (--j)
+  10   3                      ;
+  11   3              } while (--i);
+  12   2          } while (--ms);
+  13   1      }
+  14          
+  15          void delay_us(u32 us) {
+  16   1          unsigned char data i;
+  17   1      
+  18   1          do {
+  19   2              _nop_();
+  20   2              i = 5;
+  21   2              while (--i)
+  22   2                  ;
+  23   2          } while (--us);
+  24   1      }
+  25          
+  26          void hal_init_gpio() {
+  27   1          //ÉèÖÃVFD_EN = ¿ªÂ©Êä³ö
+  28   1          P1M0 = 0x08;
+  29   1          P1M1 = 0x08;
+  30   1      
+  31   1          P3M0 = 0x00;
+  32   1          P3M1 = 0x00;
+  33   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     73    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

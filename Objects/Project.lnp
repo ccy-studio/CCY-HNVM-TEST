@@ -1,0 +1,6 @@
+".\Objects\gui.obj",
+".\Objects\main.obj",
+".\Objects\pt6315.obj",
+".\Objects\sys.obj" 
+TO ".\Objects\Project" 
+PRINT(".\Listings\Project.m51") RAMSIZE(256) 

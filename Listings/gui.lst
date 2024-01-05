@@ -1,0 +1,211 @@
+C51 COMPILER V9.60.7.0   GUI                                                               01/05/2024 21:19:50 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE GUI
+OBJECT MODULE PLACED IN .\Objects\gui.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\gui.c LARGE OPTIMIZE(8,SPEED) BROWSE INCDIR(./src/inc) DEBUG OBJECTE
+                    -XTEND PRINT(.\Listings\gui.lst) OBJECT(.\Objects\gui.obj)
+
+line level    source
+
+   1          #include "gui.h"
+   2          
+   3          u8 lightLevel = 1;  // 亮度级别
+   4          static u8 data send_buf[3 * VFD_DIG_LEN] = {0};
+   5          static u8 data send_buf_cache[3 * VFD_DIG_LEN] = {0};
+   6          const u32 xdata fonts[38] = {
+   7              0x333300,  // ASCII:0,ASCII_N:48 index:0
+   8              0x201000,  // ASCII:1,ASCII_N:49 index:1
+   9              0xe12100,  // ASCII:2,ASCII_N:50 index:2
+  10              0xe13000,  // ASCII:3,ASCII_N:51 index:3
+  11              0xe21000,  // ASCII:4,ASCII_N:52 index:4
+  12              0xc33000,  // ASCII:5,ASCII_N:53 index:5
+  13              0xc33100,  // ASCII:6,ASCII_N:54 index:6
+  14              0x211000,  // ASCII:7,ASCII_N:55 index:7
+  15              0xe33100,  // ASCII:8,ASCII_N:56 index:8
+  16              0xe33000,  // ASCII:9,ASCII_N:57 index:9
+  17              0x080400,  // ASCII::,ASCII_N:58 index:10
+  18              0xe31100,  // ASCII:A,ASCII_N:65 index:11
+  19              0xa93400,  // ASCII:B,ASCII_N:66 index:12
+  20              0x032100,  // ASCII:C,ASCII_N:67 index:13
+  21              0x293400,  // ASCII:D,ASCII_N:68 index:14
+  22              0xc32100,  // ASCII:E,ASCII_N:69 index:15
+  23              0xc30100,  // ASCII:F,ASCII_N:70 index:16
+  24              0xc33100,  // ASCII:G,ASCII_N:71 index:17
+  25              0xe21100,  // ASCII:H,ASCII_N:72 index:18
+  26              0x092400,  // ASCII:I,ASCII_N:73 index:19
+  27              0x082400,  // ASCII:J,ASCII_N:74 index:20
+  28              0x520900,  // ASCII:K,ASCII_N:75 index:21
+  29              0x022100,  // ASCII:L,ASCII_N:76 index:22
+  30              0x361100,  // ASCII:M,ASCII_N:77 index:23
+  31              0x261900,  // ASCII:N,ASCII_N:78 index:24
+  32              0x233100,  // ASCII:O,ASCII_N:79 index:25
+  33              0xe10100,  // ASCII:P,ASCII_N:80 index:26
+  34              0x233900,  // ASCII:Q,ASCII_N:81 index:27
+  35              0xe30900,  // ASCII:R,ASCII_N:82 index:28
+  36              0xc33000,  // ASCII:S,ASCII_N:83 index:29
+  37              0x090400,  // ASCII:T,ASCII_N:84 index:30
+  38              0x223100,  // ASCII:U,ASCII_N:85 index:31
+  39              0x241800,  // ASCII:V,ASCII_N:86 index:32
+  40              0x221b00,  // ASCII:W,ASCII_N:87 index:33
+  41              0x140a00,  // ASCII:X,ASCII_N:88 index:34
+  42              0x140400,  // ASCII:Y,ASCII_N:89 index:35
+  43              0x112004,  // ASCII:Z,ASCII_N:90 index:36
+  44              0xc00000,  // ASCII:-,ASCII_N:45 index:37
+  45          };
+  46          
+  47          u32* gui_get_font(char c);
+  48          
+  49          void vfd_gui_init() {
+  50   1          VFD_EN = 1;
+  51   1          // VFD Setting
+  52   1          setDisplayMode(6);
+  53   1          setModeWirteDisplayMode(0);
+  54   1          vfd_gui_set_blk_level(7);
+C51 COMPILER V9.60.7.0   GUI                                                               01/05/2024 21:19:50 PAGE 2   
+
+  55   1          vfd_gui_clear();
+  56   1      }
+  57          
+  58          void vfd_gui_stop() {
+  59   1          VFD_EN = 0;
+  60   1          vfd_gui_clear();
+  61   1      }
+  62          
+  63          void vfd_gui_clear() {
+  64   1          memset(send_buf, 0x00, sizeof(send_buf));
+  65   1          sendDigAndData(0, send_buf, sizeof(send_buf));
+  66   1      }
+  67          
+  68          void vfd_gui_set_icon(u32 buf) {
+  69   1          uint8_t arr[3] = {0};
+  70   1          memset(arr, 0x00, sizeof(arr));
+  71   1          if (buf) {
+  72   2              arr[0] = (buf >> 16) & 0xFF;
+  73   2              arr[1] = (buf >> 8) & 0xFF;
+  74   2              arr[2] = buf & 0xFF;
+  75   2          }
+  76   1          sendDigAndData(0x1b, arr, 3);
+  77   1      }
+  78          
+  79          void vfd_gui_set_text(const char* string,
+  80                                const u8 colon,
+  81                                const u8 left_first_conlon) {
+  82   1          size_t str_len = strlen(string);
+  83   1          size_t index = 0, i = 0;
+  84   1          size_t len = str_len > VFD_DIG_LEN ? VFD_DIG_LEN : str_len;
+  85   1          memset(send_buf, 0x00, sizeof(send_buf));
+  86   1          for (i = 0; i < len; i++) {
+  87   2              if (string[i] && string[i] != '\0') {
+  88   3                  u32* buf = gui_get_font(string[i]);
+  89   3                  send_buf[index++] = (*buf >> 16) & 0xFF;
+  90   3                  send_buf[index++] = (*buf >> 8) & 0xFF;
+  91   3                  send_buf[index++] = *buf & 0xFF;
+  92   3              }
+  93   2          }
+  94   1          if (left_first_conlon) {
+  95   2              send_buf[7] |= 0x40;
+  96   2          }
+  97   1          if (colon) {
+  98   2              send_buf[13] |= 0x40;
+  99   2              send_buf[19] |= 0x40;
+ 100   2          }
+ 101   1          sendDigAndData(0, send_buf, sizeof(send_buf));
+ 102   1      }
+ 103          
+ 104          /**
+ 105           * 亮度调节 1~7
+ 106           */
+ 107          void vfd_gui_set_blk_level(size_t level) {
+ 108   1          if (level == lightLevel) {
+ 109   2              return;
+ 110   2          }
+ 111   1          lightLevel = level;
+ 112   1          ptSetDisplayLight(1, lightLevel);
+ 113   1      }
+ 114          
+ 115          long map(long x, long in_min, long in_max, long out_min, long out_max) {
+ 116   1          const long dividend = out_max - out_min;
+C51 COMPILER V9.60.7.0   GUI                                                               01/05/2024 21:19:50 PAGE 3   
+
+ 117   1          const long divisor = in_max - in_min;
+ 118   1          const long delta = x - in_min;
+ 119   1          return (delta * dividend + (divisor / 2)) / divisor + out_min;
+ 120   1      }
+ 121          
+ 122          u32* gui_get_font(char c) {
+ 123   1          if (c == ' ') {
+ 124   2              return 0;
+ 125   2          }
+ 126   1          if (c == '-') {
+ 127   2              return &fonts[37];
+ 128   2          }
+ 129   1          if (c >= 48 && c <= 58) {
+ 130   2              return &fonts[map(c, 48, 58, 0, 10)];
+ 131   2          } else if (c >= 65 && c <= 90) {
+ 132   2              return &fonts[map(c, 65, 90, 11, 36)];
+ 133   2          } else if (c >= 97 && c <= 122) {
+ 134   2              return gui_get_font(c - 32);
+ 135   2          } else {
+ 136   2              return 0;
+ 137   2          }
+ 138   1      }
+ 139          
+ 140          /**
+ 141           * acg动画
+ 142           */
+ 143          void vfd_gui_acg_update() {
+ 144   1          static u8 acf_i = 9;
+ 145   1          if (acf_i == 9) {
+ 146   2              static u32 icon = 0x040000;
+ 147   2              static u8 sec = 0;
+ 148   2              vfd_gui_set_icon(icon);
+ 149   2              sec++;
+ 150   2              if (sec == 3) {
+ 151   3                  icon = 0x008000;
+ 152   3              } else if (sec < 3) {
+ 153   3                  icon = (0x040000 >> sec);
+ 154   3              } else {
+ 155   3                  icon = (0x040000 << (sec - 3));
+ 156   3              }
+ 157   2              if (sec == 4) {
+ 158   3                  acf_i = 0;
+ 159   3              }
+ 160   2              if (sec == 7) {
+ 161   3                  sec = 0;
+ 162   3                  icon = 0x040000;
+ 163   3              }
+ 164   2          } else {
+ 165   2              u8 bi = acf_i == 0 ? 1 : (acf_i + 1) * 3 - 2;
+ 166   2              memcpy(send_buf_cache, send_buf, sizeof(send_buf));
+ 167   2              if (acf_i == 2 || acf_i == 4 || acf_i == 6) {
+ 168   3                  send_buf_cache[bi] |= 0x80;
+ 169   3              } else {
+ 170   3                  send_buf_cache[bi] |= 0xC0;
+ 171   3              }
+ 172   2              if (acf_i == 0) {
+ 173   3                  vfd_gui_set_icon(0);
+ 174   3              }
+ 175   2              sendDigAndData(0, send_buf_cache, sizeof(send_buf_cache));
+ 176   2              acf_i++;
+ 177   2              if (acf_i == 9) {
+ 178   3                  sendDigAndData(0, send_buf, sizeof(send_buf));
+C51 COMPILER V9.60.7.0   GUI                                                               01/05/2024 21:19:50 PAGE 4   
+
+ 179   3              }
+ 180   2          }
+ 181   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1266    ----
+   CONSTANT SIZE    =      3    ----
+   XDATA SIZE       =    159      55
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     54    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
